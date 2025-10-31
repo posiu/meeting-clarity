@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum MeetingStatus {
+  DRAFT
+  OPEN
+  CLOSED
+}
+
+enum DecisionType {
+  ACTION_ITEM
+  DECISION
+}
+
+enum AssignmentStatus {
+  OPEN
+  ACKED
+  DONE
+}
+
+model Team {
+  id              String    @id @default(cuid())
+  name            String
+  createdAt       DateTime  @default(now())
+  meetings        Meeting[]
+  slackWebhookUrl String?
+}
+
+model Meeting {
+  id           String        @id @default(cuid())
+  teamId       String
+  title        String
+  scheduledAt  DateTime?
+  status       MeetingStatus @default(DRAFT)
+  createdAt    DateTime      @default(now())
+  closedAt     DateTime?
+  shareToken   String        @unique
+  hostToken    String        @unique
+  Team         Team          @relation(fields: [teamId], references: [id])
+  topics       Topic[]
+  participants Participant[]
+  decisions    Decision[]
+  summaryHtml  String?
+  summaryText  String?
+}
+
+model Topic {
+  id        String   @id @default(cuid())
+  meetingId String
+  prompt    String
+  order     Int
+  Meeting   Meeting  @relation(fields: [meetingId], references: [id])
+}
+
+model Participant {
+  id        String  @id @default(cuid())
+  meetingId String
+  email     String
+  name      String?
+  Meeting   Meeting @relation(fields: [meetingId], references: [id])
+}
+
+model Decision {
+  id           String       @id @default(cuid())
+  meetingId    String
+  type         DecisionType
+  text         String
+  dueDate      DateTime?
+  ownerEmail   String
+  createdAt    DateTime     @default(now())
+  Meeting      Meeting      @relation(fields: [meetingId], references: [id])
+  assignments  Assignment[]
+}
+
+model Assignment {
+  id             String            @id @default(cuid())
+  decisionId     String
+  assigneeEmail  String
+  status         AssignmentStatus  @default(OPEN)
+  ackToken       String            @unique
+  Decision       Decision          @relation(fields: [decisionId], references: [id])
+}
