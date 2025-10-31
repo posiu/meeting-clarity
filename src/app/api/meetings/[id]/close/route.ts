@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { transporter } from "@/lib/mailer";
 
 export async function POST(_req: Request, { params }: { params: { id: string }}) {
   const meeting = await prisma.meeting.findUnique({
@@ -39,6 +40,19 @@ export async function POST(_req: Request, { params }: { params: { id: string }})
     where: { id: meeting.id },
     data: { status: 'CLOSED', closedAt: new Date(), summaryText: text, summaryHtml: html },
   });
+
+  // Send summary email to all participants
+
+  for (const participant of meeting.participants) {
+    await transporter.sendMail({
+      from: '"Meeting Clarity" <no-reply@meetingclarity.local>',
+      to: participant.email,
+      subject: `Summary: ${meeting.title}`,
+      text,   // plain text version
+      html,   // HTML version
+    });
+  }
+
 
   return NextResponse.redirect(new URL(`/m/${meeting.shareToken}`, process.env.NEXT_PUBLIC_APP_URL));
 }
