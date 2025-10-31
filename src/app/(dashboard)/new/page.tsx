@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 export default function NewMeetingPage() {
   const [title, setTitle] = useState('');
   const [teamName, setTeamName] = useState('My Team');
-  const [participants, setParticipants] = useState('alice@example.com,bob@example.com');
+  const [participants, setParticipants] = useState('mike@example.com, phil@example.com');
   const [topics, setTopics] = useState(['What decision A?', 'What decision B?'].join('\n'));
   const router = useRouter();
 
